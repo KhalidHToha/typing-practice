@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typing Speed Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body
+    class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-600 to-blue-500 text-white transition-all duration-500"
+  >
+    <!-- Dark Mode Toggle -->
+    <button
+      id="darkToggle"
+      class="absolute top-5 right-5 bg-white text-gray-800 dark:bg-gray-800 dark:text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md"
+    >
+      🌙
+    </button>
+
+    <!-- Game Container -->
+    <div
+      class="w-11/12 max-w-xl bg-white/10 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-xl p-6 text-center"
+    >
+      <h1 class="text-3xl font-bold mb-3">⌨️ Typing Speed Test</h1>
+      <p
+        id="quote"
+        class="text-lg bg-white/20 dark:bg-gray-700/50 p-4 rounded-lg mb-4"
+      >
+        Click “Start” to begin!
+      </p>
+
+      <textarea
+        id="input"
+        disabled
+        placeholder="Start typing here..."
+        class="w-full h-28 p-3 rounded-lg text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 focus:outline-none resize-none"
+      ></textarea>
+
+      <button
+        id="startBtn"
+        class="mt-4 px-6 py-2 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-gray-200 transition"
+      >
+        Start
+      </button>
+
+      <div id="result" class="mt-4 text-lg font-semibold"></div>
+
+      <div
+        id="history"
+        class="mt-4 text-sm bg-white/10 dark:bg-gray-700/40 p-3 rounded-lg text-left max-h-40 overflow-y-auto"
+      ></div>
+    </div>
+
+    <script>
+      const quotes = [
+        "The quick brown fox jumps over the lazy dog.",
+        "Typing games are fun and help you improve speed.",
+        "JavaScript makes websites more interactive.",
+        "Never stop learning and exploring new things.",
+        "Consistency is the key to success."
+      ];
+
+      const quoteEl = document.getElementById("quote");
+      const inputEl = document.getElementById("input");
+      const startBtn = document.getElementById("startBtn");
+      const resultEl = document.getElementById("result");
+      const historyEl = document.getElementById("history");
+      const darkToggle = document.getElementById("darkToggle");
+
+      let startTime, endTime, currentQuote;
+
+      function startGame() {
+        currentQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        quoteEl.textContent = currentQuote;
+        inputEl.value = "";
+        inputEl.disabled = false;
+        inputEl.focus();
+        resultEl.textContent = "";
+        startTime = new Date().getTime();
+        startBtn.disabled = true;
+        startBtn.textContent = "Typing...";
+      }
+
+      function endGame() {
+        endTime = new Date().getTime();
+        const totalTime = (endTime - startTime) / 1000;
+        const typedText = inputEl.value;
+        const words = typedText.trim().split(/\s+/).length;
+        const speed = Math.round((words / totalTime) * 60);
+
+        let correct = 0;
+        for (let i = 0; i < Math.min(typedText.length, currentQuote.length); i++) {
+          if (typedText[i] === currentQuote[i]) correct++;
+        }
+        const accuracy = ((correct / currentQuote.length) * 100).toFixed(1);
+
+        resultEl.innerHTML = `
+          ⏱️ <span class="text-yellow-300">Time:</span> ${totalTime.toFixed(2)}s<br>
+          ⚡ <span class="text-green-300">Speed:</span> ${speed} WPM<br>
+          🎯 <span class="text-pink-300">Accuracy:</span> ${accuracy}%
+        `;
+
+        saveScore(speed, accuracy);
+        showHistory();
+
+        inputEl.disabled = true;
+        startBtn.disabled = false;
+        startBtn.textContent = "Play Again";
+      }
+
+      function saveScore(speed, accuracy) {
+        const score = {
+          date: new Date().toLocaleString(),
+          speed,
+          accuracy
+        };
+        let history = JSON.parse(localStorage.getItem("typingHistory")) || [];
+        history.push(score);
+        if (history.length > 5) history.shift();
+        localStorage.setItem("typingHistory", JSON.stringify(history));
+      }
+
+      function showHistory() {
+        const history = JSON.parse(localStorage.getItem("typingHistory")) || [];
+        if (history.length === 0) {
+          historyEl.textContent = "";
+          return;
+        }
+        let html = "<strong>📊 Last 5 Scores:</strong><br>";
+        history.forEach(s => {
+          html += `• ${s.date} → ⚡ ${s.speed} WPM | 🎯 ${s.accuracy}%<br>`;
+        });
+        historyEl.innerHTML = html;
+      }
+
+      inputEl.addEventListener("input", () => {
+        if (inputEl.value === currentQuote) {
+          endGame();
+        }
+      });
+
+      startBtn.addEventListener("click", startGame);
+
+      // 🌙 Dark Mode Toggle
+      darkToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        darkToggle.textContent = document.body.classList.contains("dark")
+          ? "☀️"
+          : "🌙";
+      });
+
+      showHistory();
+    </script>
+  </body>
+</html>
